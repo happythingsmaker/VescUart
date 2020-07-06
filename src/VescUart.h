@@ -10,15 +10,23 @@ class VescUart
 {
 	/** Struct to store the telemetry data returned by the VESC */
 	struct dataPackage {
+        float tempFetFiltered;
+        float tempMotorFiltered;
+        float currentTot;
+        float currentInTot;
 		float avgMotorCurrent;
 		float avgInputCurrent;
 		float dutyCycleNow;
+        float batteryLevel;
 		long rpm;
+        long speed;
 		float inpVoltage;
 		float ampHours;
 		float ampHoursCharged;
 		long tachometer;
 		long tachometerAbs;
+        long ppmLevel;
+        long lastPulseLen;
 	};
 
 	/** Struct to hold the nunchuck values to send over UART */
@@ -37,22 +45,31 @@ class VescUart
 		VescUart(void);
 
 		/** Variabel to hold measurements returned from VESC */
-		dataPackage data; 
+		dataPackage data;
 
 		/** Variabel to hold nunchuck values */
-		nunchuckPackage nunchuck; 
+		nunchuckPackage nunchuck;
 
 		/**
 		 * @brief      Set the serial port for uart communication
-		 * @param      port  - Reference to Serial port (pointer) 
+		 * @param      port  - Reference to Serial port (pointer)
 		 */
 		void setSerialPort(HardwareSerial* port);
 
 		/**
 		 * @brief      Set the serial port for debugging
-		 * @param      port  - Reference to Serial port (pointer) 
+		 * @param      port  - Reference to Serial port (pointer)
 		 */
 		void setDebugPort(Stream* port);
+
+
+
+		int getVescValues(const uint8_t& received_byte);
+        void requestPPMValues(void);
+        void requestVescGetValues(void);
+
+
+
 
 		/**
 		 * @brief      Sends a command to VESC and stores the returned data
@@ -95,12 +112,12 @@ class VescUart
 		 */
 		void printVescValues(void);
 
-	private: 
+	private:
 
 		/** Variabel to hold the reference to the Serial object to use for UART */
 		HardwareSerial* serialPort = NULL;
 
-		/** Variabel to hold the reference to the Serial object to use for debugging. 
+		/** Variabel to hold the reference to the Serial object to use for debugging.
 		  * Uses the class Stream instead of HarwareSerial */
 		Stream* debugPort = NULL;
 
@@ -112,6 +129,9 @@ class VescUart
 		 * @return     The number of bytes send
 		 */
 		int packSendPayload(uint8_t * payload, int lenPay);
+
+        int receiveBufferMessage(uint8_t * payloadReceived, const uint8_t & receivedByte);
+
 
 		/**
 		 * @brief      Receives the message over Serial
@@ -137,7 +157,7 @@ class VescUart
 		 * @param      message  - The payload to extract data from
 		 * @return     True if the process was a success
 		 */
-		bool processReadPacket(uint8_t * message);
+		inline int processReadPacket(uint8_t * message);
 
 		/**
 		 * @brief      Help Function to print uint8_t array over Serial for Debug
